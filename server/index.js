@@ -3,6 +3,7 @@ const cors = require('cors');
 require('dotenv').config();
 const connection = require('./config/connection');
 const router = require('./routes/index');
+const cookiesParser = require('cookie-parser');
 
 const app = express();
 app.use(cors({
@@ -12,6 +13,7 @@ app.use(cors({
 
 // This line fix the "Cannot destructure property 'name' of 'req.body' as it is undefined." in Postman
 app.use(express.json());
+app.use(cookiesParser());
 
 const PORT = process.env.PORT || 8080;
 
