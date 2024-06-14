@@ -1,22 +1,46 @@
 import React, { useState } from 'react';
 import { IoClose } from "react-icons/io5";
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import uploadFile from '../helpers/uploadFile';
+import axios from 'axios';
+import { toast } from 'react-hot-toast';
 
 
 const RegisterPage = () => {
   const [data, setData] = useState({
-    name : '',
+    name: '',
     email: '',
     password: '',
     profilePic: ''
   });
-
+  
   const [uploadPhoto, setUploadPhoto] = useState('');
+  const navigate = useNavigate();
+  
+  const handleOnChange = (e) => {
+    const { name, value } = e.target;
+  
+    setData((prev) => {
+      return {
+        ...prev,
+        [name]: value,
+      }
+    })
+  }
 
-  const handleUploadPicture = (e) => {
-    const file = e.target.files[0]
+  const handleUploadPicture = async (e) => {
+    const file = e.target.files[0];
 
+    const uploadPicture = await uploadFile(file)
+    console.log("Upload Photo:", uploadPicture)
     setUploadPhoto(file);
+    setData((prev) => {
+      return {
+        ...prev,
+        profilePic: uploadPicture?.url
+      }
+
+    })
   }
 
   const handleClearUploadPicture = (e) => {
@@ -25,26 +49,42 @@ const RegisterPage = () => {
     setUploadPhoto(null);
   }
 
-  const handleSubmitForm = (e) => {
+  const handleSubmitForm = async (e) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    const url = `${import.meta.env.VITE_REACT_APP_BACKEND_URL}/api/register`
+    
+    console.log('meta.env.VITE_REACT_APP_BACKEND_URL', import.meta.env.VITE_REACT_APP_BACKEND_URL);
+    console.log('URL: --> ', url);
+    
+    try {
+      const response = await axios.post(url, data);
+      console.log('Response: ', response);
+      
+      toast.success(response.data.message);
+
+      if(response.data.success){
+        setData({
+          name : "",
+          email : "",
+          password : "",
+          profile_pic : ""
+        })
+
+        navigate('/email')
+
+    }
+    } catch (error) {
+      toast.error(error.response?.data?.message);
+      console.log("error: " , error)
+    }
     console.log('data: ', data);
+
   }
 
   // console.log('UploadPhoto: ', uploadPhoto);
 
-  const handleOnChange = (e) => {
-    const { name, value } = e.target;
-
-    setData((prev) => {
-      return{
-        ...prev,
-        [name]: value,
-      }
-    })
-  }
-
-  
   return (
     <div className='mt-5'>
       <div className='bg-white w-full max-w-md rounded overflow-hidden p-4 mx-auto'>
@@ -108,11 +148,11 @@ const RegisterPage = () => {
                     </button>
                   )
                 }
-                
+
               </div>
 
             </label>
-            
+
             <input
               type='file'
               id='profilePic'
