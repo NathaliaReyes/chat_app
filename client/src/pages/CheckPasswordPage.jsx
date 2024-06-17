@@ -1,25 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { IoClose } from "react-icons/io5";
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-// import uploadFile from '../helpers/uploadFile';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 // import { PiUserCircle } from "react-icons/pi";
 import Avatar from '../components/Avatar';
+import { useDispatch } from 'react-redux';
+import { setToken, setUser } from '../redux/userSlice';
 
 const CheckPasswordPage = () => {
   const [data, setData] = useState({
     password: '',
   });
-  
+
   const navigate = useNavigate();
   const location = useLocation();
+  const dispatch = useDispatch();
 
   console.log('Location: ', location.state);
-  
+
+  useEffect(() => {
+    if (!location?.state?.name) {
+      navigate('/email');
+    }
+  }, [])
+
   const handleOnChange = (e) => {
     const { name, value } = e.target;
-  
+
     setData((prev) => {
       return {
         ...prev,
@@ -31,25 +39,36 @@ const CheckPasswordPage = () => {
   const handleSubmitForm = async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     const url = `${import.meta.env.VITE_REACT_APP_BACKEND_URL}/api/password`
-    
+
     // console.log('meta.env.VITE_REACT_APP_BACKEND_URL', import.meta.env.VITE_REACT_APP_BACKEND_URL);
-    // console.log('URL: --> ', url);
-    
+    console.log('URL: --> ', url);
+
     try {
-      const response = await axios.post(url, data);
-      // console.log('Response: ', response);
+      const response = await axios({
+        method: 'post',
+        url: url,
+        data: {
+          userId: location?.state?._id,
+          password: data.password
+        },
+        withCredentials: true
+      })
       toast.success(response.data.message);
 
-      if(response.data.success){
+      
+      if (response.data.success) {
+        dispatch(setToken(response?.data?.token));
+        localStorage.setItem('token', response?.data?.token);
+
         setData({
-          password : "",
+          password: "",
         })
 
         navigate('/')
 
-    }
+      }
     } catch (error) {
       toast.error(error.response?.data?.message);
       // console.log("error: " , error)
@@ -65,7 +84,7 @@ const CheckPasswordPage = () => {
           {/* <PiUserCircle 
             size={80}
           /> */}
-          <Avatar 
+          <Avatar
             width={70}
             height={70}
             name={location?.state?.name}
@@ -76,7 +95,7 @@ const CheckPasswordPage = () => {
         <h3>Welcome to Chat App!</h3>
 
         <form className='grid gap-4 mt-3' onSubmit={handleSubmitForm}>
-          
+
 
           <div className='flex flex-col gap-1'>
             <label htmlFor='password'>Password :</label>
@@ -95,12 +114,12 @@ const CheckPasswordPage = () => {
           <button
             className='bg-primary text-lg py-1 hover:bg-secondary rounded mt-2 font-bold text-white leading-relaxed tracking-wider'
           >
-            Let's Go!
+            Login
           </button>
 
         </form>
 
-        <p className='my-3 text-center'>New User ? <Link to={"/register"} className='hover:text-primary font-semibold'>Register</Link></p>
+        <p className='my-3 text-center'> <Link to={"/forgot-password"} className='hover:text-primary font-semibold'>Forgot Password</Link></p>
       </div>
     </div>
   )
